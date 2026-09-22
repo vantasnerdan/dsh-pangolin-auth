@@ -1,0 +1,11 @@
+This project contains a modified copy of the DeepSeek Harness browser
+connection implementation from:
+
+  https://github.com/deepseek-ai/deepseek-harness
+  tag: dsh-v0.1.5-rc.2
+  commit: fb2c4b9e69
+  original package: @deepseek-ai/dsh-client-connection
+
+The copied implementation is distributed under the MIT License in LICENSE.
+The Pangolin authentication provider, setup CLI, build scripts, and tests are
+project-specific modifications.

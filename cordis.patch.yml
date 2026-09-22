@@ -1,0 +1,16 @@
+# Replace the shipped browser transport with the Pangolin-authenticated provider.
+# The setup CLI writes the deployment-specific origin and authority into the
+# profile's later patch layer before selecting this bundle.
+- id: connection
+  disabled: true
+
+- insert:
+    - id: pangolin-connection
+      name: dsh-pangolin-auth
+      inject: [webRuntime]
+      config:
+        publicOrigin: ''
+        identityHeader: remote-user
+        recovery: {}
+        trustedHosts: []
+        maxRequestBodyBytes: 314572800
