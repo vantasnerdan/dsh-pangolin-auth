@@ -43,11 +43,15 @@ describe('owned replacement connection service', () => {
       host: 'agent.example.com',
       origin: 'https://agent.example.com',
     } })).toBe(401)
-    // DSH 0.1.5 routes both HTTP and WebSocket handshakes through this method.
-    expect(connection?.requestRejection({ headers: {
+    expect(connection?.admit({ headers: {
+      host: 'agent.example.com',
+      origin: 'https://agent.example.com',
+      'remote-user': 'alice',
+    } })).toHaveProperty('peer')
+    expect(connection?.admit({ headers: {
       host: 'evil.example.com',
       'remote-user': 'alice',
-    } })).toBe(403)
+    } })).toEqual({ rejection: 403 })
 
     await fiber.dispose()
     expect(routes).toHaveLength(0)

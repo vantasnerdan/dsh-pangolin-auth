@@ -1,5 +1,6 @@
 /** DSH browser transport authenticated by Pangolin forwarded identity. */
 import type { Context } from '@deepseek-ai/cordis'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import z from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-attachment'
 import type { WebRoute } from '@deepseek-ai/dsh-host-webserver'
@@ -15,14 +16,17 @@ import {
 } from './recovery-config.ts'
 
 export type {
+  PeerAdmission,
   ConnectionFetchMethod,
   ConnectionFetchHandler,
   ConnectionFetchRoute,
   ConnectionIndexRequest,
   ConnectionIndexResponse,
   ConnectionRpcEndpointMatcher,
+  ConnectionRpcAttachment,
   ConnectionRpcFailure,
   ConnectionRpcHandler,
+  ConnectionRpcHandlerResult,
   ConnectionRequestRejection,
   ConnectionRpcResult,
   ConnectionRequestBodyMode,
@@ -34,7 +38,9 @@ export type {
   RpcMessage,
   ServerResponse,
 } from './rpc.ts'
+export type { PeerId, PeerScope, RemoteInvocation } from '@deepseek-ai/dsh-typert-protocol'
 export { RpcId, transportError } from './rpc.ts'
+export { OperatorPeer } from './operator-peer.ts'
 export {
   clientRequestSchema,
   rpcErrorSchema,
@@ -51,6 +57,20 @@ export const name = 'pangolin-connection'
 
 /** Services required before the replacement Connection is provided. */
 export const inject = ['webServer']
+
+declare module '@deepseek-ai/cordis' {
+  interface Events {
+    /**
+     * Admit or wrap an authenticated shared API request, including body transfer.
+     * Existing requests continue when a listener refuses subsequent requests.
+     * @param request - Authenticated incoming HTTP request.
+     * @param response - Response owned until the delegated bridge settles.
+     * @param next - Delegate to the next listener or the shared API bridge.
+     * @mode waterfall
+     */
+    'connection/request'(request: IncomingMessage, response: ServerResponse, next: () => Promise<void>): Promise<void>
+  }
+}
 
 const REQUEST_ENVELOPE_HEADROOM_BYTES = 1024 * 1024
 
@@ -125,14 +145,22 @@ export function apply(ctx: Context, config: ConnectionConfig): void {
     kind: 'prefix',
     path: API_PATH,
     handler: async (req, res) => {
-      const rejection = connection.requestRejection(req)
-      if (rejection !== undefined) {
-        res.writeHead(rejection)
-        res.end(rejection === 401 ? 'unauthorized' : 'forbidden')
+      const admission = connection.admit(req)
+      if ('rejection' in admission) {
+        res.writeHead(admission.rejection)
+        res.end(admission.rejection === 401 ? 'unauthorized' : 'forbidden')
         return
       }
-      await bridge(req, res, fetchHandler, maxRequestBodyBytes)
+      await ctx.waterfall(
+        'connection/request',
+        req,
+        res,
+        () => bridge(req, res, fetchHandler, maxRequestBodyBytes),
+      )
     },
   }
   ctx.effect(() => ctx.webServer.register(route), 'pangolin-auth: /api route')
+  ctx.inject(['attachments'], (attachmentCtx) => {
+    assertImageBodyCapacity(attachmentCtx, maxRequestBodyBytes)
+  })
 }

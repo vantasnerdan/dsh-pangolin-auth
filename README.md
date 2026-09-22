@@ -4,13 +4,13 @@ A proper Cordis replacement for the DSH Web connection plugin that trusts
 Pangolin's authenticated identity header instead of DSH launch tokens and
 browser cookies.
 
-This release targets **DeepSeek Harness 0.1.5-rc.2 exactly**. The setup CLI
+This release targets **DeepSeek Harness 0.1.7-alpha.1 exactly**. The setup CLI
 refuses other DSH versions.
 
 ## Architecture
 
 The package owns a complete `connection` service implementation derived from
-`@deepseek-ai/dsh-client-connection@0.1.5-rc.2`. Its bundle patch disables the
+`@deepseek-ai/dsh-client-connection@0.1.7-alpha.1`. Its bundle patch disables the
 shipped `connection` row and inserts `pangolin-connection`, including a
 compatible browser `./client` entry. It does not assign to another service,
 wrap methods, mutate prototypes, or modify the installed DSH package.
@@ -71,9 +71,9 @@ otherwise expose a transient failed composition.
 
 ```sh
 dsh --version
-# Must print: 0.1.5-rc.2
+# Must print: 0.1.7-alpha.1
 
-dsh plugin --profile web add /path/to/dsh-pangolin-auth-0.1.0.tgz
+dsh plugin --profile web add /path/to/dsh-pangolin-auth-0.2.0.tgz
 dsh plugin --profile web exec dsh-pangolin-auth -- setup \
   --profile web \
   --domain agent-name.example.com
@@ -166,7 +166,7 @@ Restore is restricted to backup directories owned by the selected profile.
 ## Compatibility and maintenance
 
 The Host and Client transport sources are pinned to DSH tag
-`dsh-v0.1.5-rc.2` (`fb2c4b9e69`). A new DSH release may change the connection
+`dsh-v0.1.7-alpha.1` (`c36a83ff6b`). A new DSH release may change the connection
 service, browser module protocol, or composition row. Publish a separately
 tested plugin version for that DSH release instead of bypassing the version
 check.

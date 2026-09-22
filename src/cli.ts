@@ -10,7 +10,7 @@ import {
 } from './setup.ts'
 
 const execFile = promisify(execFileCallback)
-const EXPECTED_DSH_VERSION = '0.1.5-rc.2'
+const EXPECTED_DSH_VERSION = '0.1.7-alpha.1'
 
 const USAGE = `Usage:
   dsh-pangolin-auth setup --profile <name> --domain <host[:port]> [--identity-header <name>]
