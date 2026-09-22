@@ -24,6 +24,8 @@ Authentication changes are limited to these owned behaviors:
 - DSH does not mint a launch token, accept a query token, or issue an auth
   cookie.
 - The URL announced by `dsh web` is the configured external HTTPS origin.
+- The authenticated Pangolin browser is the trusted DSH operator, so Host
+  settings and other operator-only surfaces remain available remotely.
 - The DSH Web server must bind to `127.0.0.1`; startup fails otherwise.
 
 ## Security requirements
@@ -41,7 +43,9 @@ This plugin is safe only when all of the following are true:
 5. The configured public domain routes to `http://127.0.0.1:<dsh-port>` on the
    agent VM; the DSH port is not exposed to the LAN or Internet.
 6. The VM and DSH process are operated as one trusted user. DSH remains a
-   single-owner application, not a multi-tenant authorization system.
+   single-owner application, not a multi-tenant authorization system. Every
+   identity Pangolin admits receives the same full operator privileges,
+   including settings access and operations on the agent VM.
 
 The default identity header is Pangolin's `Remote-User`. The CLI accepts only
 Pangolin's `Remote-User`, `Remote-Email`, `Remote-Name`, and `Remote-Role`
@@ -73,7 +77,7 @@ otherwise expose a transient failed composition.
 dsh --version
 # Must print: 0.1.7-alpha.1
 
-dsh plugin --profile web add /path/to/dsh-pangolin-auth-0.2.0.tgz
+dsh plugin --profile web add /path/to/dsh-pangolin-auth-0.2.1.tgz
 dsh plugin --profile web exec dsh-pangolin-auth -- setup \
   --profile web \
   --domain agent-name.example.com

@@ -125,6 +125,12 @@ export interface ConnectionInstallOptions {
   readonly recovery?: ConnectionRecoveryConfig
   /** Page location; omit for a non-browser composition. */
   readonly location?: ConnectionLocation
+  /**
+   * Grant the privileged operator surface to this authenticated client even
+   * when its page authority is not loopback. Only a composition that
+   * authenticates every index and transport request may enable this.
+   */
+  readonly trustedOperator?: boolean
 }
 
 /**
@@ -135,7 +141,8 @@ export interface ConnectionHandle {
   /**
    * Whether the privileged surface is reachable: the page authority is
    * loopback, the transport declares the page owns the Host
-   * ({@link ClientTransportHooks.ownsHost}), or the context is not a browser.
+   * ({@link ClientTransportHooks.ownsHost}), the authenticated composition
+   * declares a trusted operator, or the context is not a browser.
    */
   readonly isLoopback: boolean
   /** Current Remote event generation and the Host facts carried by its opening frame. */
@@ -245,7 +252,10 @@ export function installConnection(ctx: Context, options: ConnectionInstallOption
     publishState(undefined)
   }
   const handle: ConnectionHandle = {
-    isLoopback: transport?.ownsHost === true || pageLocation === undefined || isLoopbackHostname(pageLocation.hostname),
+    isLoopback: options.trustedOperator === true
+      || transport?.ownsHost === true
+      || pageLocation === undefined
+      || isLoopbackHostname(pageLocation.hostname),
     generation: {
       getSnapshot: () => generation,
       subscribe: (listener) => {
@@ -320,6 +330,11 @@ export function apply(ctx: Context): void {
   const transport = globals.__DSH_TRANSPORT__
   installConnection(ctx, {
     ...(transport === undefined ? {} : { transport }),
+    // Pangolin authenticates the index and every HTTP/WebSocket transport
+    // request before this owned client bundle can operate. DSH is a
+    // single-operator application, so the authenticated remote browser receives
+    // the same privileged surfaces as its loopback browser.
+    trustedOperator: true,
     recovery: resolveConnectionConfig(globals.__DSH_CONNECTION_RECOVERY__),
     ...(pageLocation === undefined ? {} : { location: pageLocation }),
   })
